@@ -1,0 +1,213 @@
+Design Description: 
+
+My Sequence is a circular doubly-linked list with a dummy head. For the private members of Sequence, I have a Node struct for nodes (elements of the list), a Node pointer called head (the dummy head), and the Sequence's size. Each node has an ItemType value, a Node pointer previous, and a Node pointer next. 
+
+For empty Sequences, the size would be 0 and the Sequence would only consist of the head. The head's previous pointer would be itself, and the head's next pointer would be itself too to create a circular design. 
+
+For typical sequences, the last element's next pointer would be the head, and the head's previous pointer would be the last element. 
+=====================================================================================================
+Pseudocode: 
+
+Sequence::Sequence(const Sequence& other)
+check for other is empty
+initialize head and make temp pointers to parse through this (our Sequence) and other
+for loop to parse through other 
+	make a new Node called newGuy
+	initialize newGuy 
+	make temp the newGuy to parse through this
+---------
+Sequence::insert(int pos, const ItemType& value)
+check for this is empty 
+for loop for inserting at beginning and in between (because index for last element doesn't exist yet) 
+	if pos == the index we want 
+		initialize newGuy here, increment size, and return
+case for inserting at end of list
+	parse through to end of array
+	insert at end, making newGuy's previous head, increment size, and return
+---------
+Sequence::operator=(const Sequence& rhs) 
+uses modern method with swap 
+---------
+Sequence::~Sequence
+while sequence isn't empty erase its first (zeroeth) element
+---------
+Sequence::insert(const ItemType& value)
+use for loop to parse through array and find where value should fit
+	break if it fits
+insert at whatever index (if it's greater than all other values then insert at end) 
+---------
+Sequence::erase(int pos)
+check for invalid parameters and empty
+case for if the size is 1 
+code for all other cases
+	for loop to parse through elements until pos is reached
+	make the element's next and previous null so other elements in list are unaffected by deletion
+	delete the item at pos
+---------
+Sequence::remove(const ItemType& value) 
+while the value remains found in the list remove its instances one by one
+---------
+Sequence::swap(Sequence& other) 
+swap the heads of the lists 
+---------
+subsequence
+check for invalid parameters
+for loop parsing through seq1
+	for loop parsing through seq2
+		check if seq2 matches seq1's segment
+			if they match, return seq1's index
+default: no matches found so return -1
+---------
+interleave
+check that result is empty
+find out which list is smaller and set size (the overlapping portion of result) to that
+for loop going up to size to overlap the two
+	use get and insert functions to update result 
+	also increment an index for further use in larger list
+for loops for whichever seq is larger - if equal, don't do anything
+	add the larger array's leftover elements to result
+=====================================================================================================
+Test Cases (written so that it can be pasted into main):
+    
+// using default Sequence() to create empty sequence, also tests empty, which includes size function
+    Sequence ss;
+    assert(ss.empty());
+
+    ItemType x = "xxx";// x used to check if the get() function properly retrieves existing values
+
+// tests set function, two-parameter insert function, and find
+    Sequence bye;
+    bye.insert(0, "bye");
+    bye.set(0, "hello");
+    assert(bye.find("bye") == -1);
+    assert(bye.find("hello") == 0);
+    assert(bye.get(0, x) && x == "hello");
+
+// testing the two-parameter insert() function
+// does it work for empty sequences?
+    assert(ss.insert(0, "aaa") == 0 && ss.get(0, x) && x == "aaa");
+
+// does it work when we want to add a value to the end?
+    assert(ss.insert(1, "ccc") == 1 && ss.get(1, x) && x == "ccc");
+
+// does it work when we want to add a value in between?
+    assert(ss.insert(1, "bbb") == 1 && ss.get(1, x) && x == "bbb");
+
+// testing the one-parameter insert() function to see if it adds value in right order
+    assert(ss.insert("ddd") == 3 && ss.get(3, x) && x == "ddd");
+    assert(ss.insert("aaa") == 0 && ss.get(0, x) && x == "aaa");
+
+// testing that the set function properly sets index value
+    assert(ss.set(0, "000") && ss.get(0, x) && x == "000");
+
+// does erase properly get rid of the desired index?
+    assert(ss.erase(0) && ss.get(0, x) && x == "aaa" && ss.size() == 4);
+
+// does remove properly get rid of the desired values?
+    assert(ss.remove("aaa") == 1);
+    assert(ss.remove("aaa") == 0); // because we've already removed it remove() shouldn't find this
+    assert(ss.remove("bbb") == 1);
+    assert(ss.remove("ccc") == 1);
+    assert(ss.remove("ddd") == 1);
+
+// tests copy constructor
+    Sequence t;
+    t.insert("t");
+    t.insert("t");
+
+    Sequence tt = t;
+    assert(!tt.empty() && tt.get(0, x) && x == "t" && tt.get(1, x) && x == "t");
+
+// tests assignment operator, which also includes swap function
+    t = ss; // so now t should be an empty sequence
+    ss = tt; // now ss should have m_size 2 and contain: t t
+    assert(t.empty());
+    assert(ss.size() == 2);
+
+// UNSIGNED LONG CASES START HERE - make sure to change the ItemType's alias to unsigned long //
+// testing subsequence
+// Sequence a: 30 21 63 42 17 63 17 29 8 32
+// Sequence b: 63 17 29
+    Sequence a; 
+    a.insert(0, 32);
+    a.insert(0, 8);
+    a.insert(0, 29);
+    a.insert(0, 17);
+    a.insert(0, 63);
+    a.insert(0, 17);
+    a.insert(0, 42);
+    a.insert(0, 63);
+    a.insert(0, 21);
+    a.insert(0, 30);
+
+    Sequence b; 
+    b.insert(0, 29);
+    b.insert(0, 17);
+    b.insert(0, 63);
+    assert(subsequence(a, b) == 5);
+
+
+    b.remove(63);
+    b.remove(17);
+    b.insert(0, 63);
+    b.insert(0, 17);
+// now b is 17 63 29
+    assert(subsequence(a, b) == -1);
+
+//testing interleave
+// Sequence a: 30 21 63 42 17 63 17 29 8 32
+// Sequence b: 17 63 29
+    ItemType v;
+    Sequence ab; // test if interleave() works when seq1.size() > seq2.size()
+    interleave(a, b, ab);
+// ab should go: 30 17 21 63 63 29 42 17 63 17 29 8 32
+    assert(ab.get(0, v) && v == 30 &&
+           ab.get(1, v) && v == 17 &&
+           ab.get(2, v) && v == 21 &&
+           ab.get(3, v) && v == 63 &&
+           ab.get(4, v) && v == 63 &&
+           ab.get(5, v) && v == 29 &&
+           ab.get(6, v) && v == 42);
+    assert(ab.size() == 13);
+
+    Sequence ba; // test if interleave() works when seq1.size() < seq2.size()
+    interleave(b, a, ba);
+// ba should go: 17 30 63 21 29 63 42 17 63 17 29 8 32
+    assert(ba.get(0, v) && v == 17 &&
+           ba.get(1, v) && v == 30 &&
+           ba.get(2, v) && v == 63 &&
+           ba.get(3, v) && v == 21 &&
+           ba.get(4, v) && v == 29 &&
+           ba.get(5, v) && v == 63 &&
+           ba.get(6, v) && v == 42);
+
+// another interleave test case
+    Sequence odd;
+    odd.insert(0, 1);
+    odd.insert(1, 3);
+
+    Sequence even;
+    even.insert(0, 2);
+    even.insert(1, 4);
+
+    Sequence oddeven; // test if interleave() works when seq1.size() == seq2.size()
+    interleave(odd, even, oddeven); // should be 1 2 3 4
+    assert(oddeven.get(0, v) && v == 1 &&
+           oddeven.get(1, v) && v == 2 &&
+           oddeven.get(2, v) && v == 3 &&
+           oddeven.get(3, v) && v == 4);
+
+    Sequence c1;
+    c1.insert(0, 1);
+    c1.insert(0, 1);
+
+    Sequence c2;
+    c2.insert(0, 2);
+    c2.insert(0, 2);
+
+    Sequence c12; // test if interleave() works when seq1.size() == seq2.size()
+    interleave(c1, c2, c12); // should be 1 2 1 2
+    assert(oddeven.get(0, v) && v == 1 &&
+           oddeven.get(1, v) && v == 2 &&
+           oddeven.get(2, v) && v == 3 &&
+           oddeven.get(3, v) && v == 4);
