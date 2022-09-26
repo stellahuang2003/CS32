@@ -1,0 +1,132 @@
+Descriptions:
+
+Board: 
+The only private member I added to the BoardImpl class was a 2D array of char called m_board. In BoardImp's constructor I initialized m_board's cell values to be ‘.’, signifying unattacked cells, which would be updated to ‘X’ and ‘o’ with the attack functions. m_board also made display() very easy, as I just iterated through the rows and columns of m_board through nested for loops and couted their values. For placeShip as well, I would be able to check m_board to make sure that the cell the player wants to attack hasn’t been already attacked. 
+
+Game:
+I added to the GameImpl class the private ints m_nRows, m_nCols, and m_nShips. These would be returned by Game’s getter functions when other classes need them. I also added vectors for m_shipLengths, m_shipSymbols, and m_shipNames - at the shipId-th index of each vector would be the length, symbol, or name of that shipId, respectively. I decided to go with vectors instead of static arrays because static arrays with fixed sizes would not be as efficient because its empty values would take up unnecessary memory. 
+
+HumanPlayer: 
+The only private member I added was the function bool validDirInput(string& input). This function’s purpose is to be what getLineWithTwoIntegers() is to the cell inputs, only for whatever HumanPlayer inputs for Direction. It cin’s HumanPlayer’s Direction input and returns whether it’s valid. 
+
+MediocrePlayer: 
+I added the private members int state (to indicate whether the player was in state 1 or 2), Point m_currentState2Cell (to keep track of the first ‘X’ cell attacked by MediocrePlayer that they should keep attacking around), and a vector of availableCells (to keep track of cells available to be attacked). 
+
+I also made a private recursive function to be called in placeShips(), m_randomPoint() (because the Game’s randomPoint() function doesn’t take into account already-attacked points, making it inefficient), and removePointFromAvailableCells(Point p) (erases already-attacked point from availableCells vector). 
+
+GoodPlayer:
+Like MediocrePlayer, I included state and m_currentState2Cell. I also included m_originalState2Cell as an attack origin point, just in case, for instance, GoodPlayer hits the middle of a horizontal battleship and traverses all the way left but isn’t able to destroy it because the remaining segment was to the right of the original attack point. I also included bool continuousAttack to account for cases like these, where the ship isn’t fully destroyed so we must return to the attack origin point and traverse in the other direction. 
+
+In addition to that, I included currShipId and currShipDirection to account for cases where multiple ships might have been placed next to each other, so GoodPlayer doesn’t mistaken two ‘X’s as the same ship when they are actually from different ships next to each other. currShipDirection also dictates the direction (up/down, left/right) that GoodPlayer should move in.
+
+I have three 2D arrays of chars for GoodPlayer: attackedCells, checkerBoard, and m_ships. I included attackedCells (consisting of ‘.’, ‘o’, and ‘X’) so that GoodPlayer knows which cells have been successful and which ones are available for attacking. checkerBoard was made so GoodPlayer could prioritize attacking in a checkBoard pattern (ie. for even rows, attack points with even cols, and for odd, attack odd) to its moves’ efficiency. Finally, I included m_ships to help with GoodPlayer’s placeShips() function to help visualize and check that no ships were placed next to each other. 
+
+I also have two vectors: toBeAttacked and availableCells. availableCells serves the same purpose as it did in MediocrePlayer. toBeAttacked pushes on any additional Points for GoodPlayer to prioritize checking (ie. the GoodPlayer found that two ships were next to each other, so it prioritizes destroying one ship and then gets to the other). 
+
+For GoodPlayer’s placeShips()’s helper functions, I have: bool randDirection(), areShipsTouching(), m_shipsPlaceShip(), m_shipsUnplaceShip(), bool tryRandom(), and bool recursive(). The first four functions all supplement tryRandom(), which is a method to place the ships in random orientations and positions without the ships touching. areShipsTouching() checks m_ships after m_shipsPlaceShip() has been called, and if the ships are touching, then m_shipsUnplaceShip() is called to remove it from m_ships and try again. m_shipsPlaceShip() and m_shipsUnplaceShip() are called in alignment with Board’s placeShip() and unplaceShip() functions. 
+
+For GoodPlayer’s recommendAttack()’s helper functions, I have: m_randomPoint(), removePointFromAvailableCells(Point p), cleanoutAttackedCells(), cleanoutToBeAttacked(), and updateToBeAttacked(). m_randomPoint() and removePointFromAvailableCells(Point p) are used in the same way as they are in MediocrePlayer. cleanoutAttackedCells() removes from the 2D array attackedCells any unnecessary points to attack (ie. points surrounded by ‘o’, which indicates already-attacked and unsuccessful). cleanoutToBeAttacked() uses attackedCells' char values to erase already-attacked points from the toBeAttacked vector. Finally, updateToBeAttacked(Point p) pushes any unattacked Points surrounding p onto toBeAttacked. 
+==============================================================
+GoodPlayer's strategies for placing ships and recommending moves:
+
+For placing ships, GoodPlayer tries to place the ships in random directions at random positions on the board, optimally so that no ships are touching. For recommending moves, if in state 1, if there are any Points in the vector toBeAttacked, then it recommends the front Point. If not, then GoodPlayer attacks in a checkerboard pattern to minimize the number of cells it has to check before hitting a ship. 
+
+In state 2, GoodPlayer first assumes the current ship’s direction (currShipDir) is horizontal and attacks left and right to confirm - if it is, it keeps attacking in the horizontal direction, and if not then it changes its direction to vertical, attacking up and down. Through recordAttackResult(), GoodPlayer is also able to find out if there are two ships placed next to each other through the shipId parameter, which GoodPlayer also uses to push possible continuation Points (of the yet-to-be-attacked ship, since GoodPlayer can only focus on attacking one ship at a time) onto the toBeAttacked vector.
+==============================================================
+Untrivial Pseudocode:
+bool MediocrePlayer::placeShips(Board& b) {
+	while less than 50 attempts
+		block array and apply recursive()
+			if recursive() can place the ships properly, return true
+	return false
+}
+
+bool MediocrePlayer::recursive(Board& b, int shipId, int shipsLeft) {
+	for loop through rows
+		for loop through cols
+			if I can place the ship at point(row, col) horizontally, then try placing the next ship with recursive()
+				if you can’t place the next ship, backtrack and re-place the previous ship
+			if I can place the ship at point(row, col) vertically, then try placing the next ship with recursive()
+				if you can’t place the next ship, backtrack and re-place the previous ship
+	if not all ships were able to be placed, return false
+}
+
+bool GoodPlayer::placeShips(Board& b) {
+	check if all ships can fit on board 
+	if they can, try placing ships randomly and away from each other using tryRandom()
+		return true if possible
+	if not, default to using mediocrePlayer's placeShips() code
+		return true if possible
+	if not, get rid of the blocking in mediocrePlayer's placeShips()
+		return true if possible
+	return false otherwise
+}
+
+bool GoodPlayer::tryRandom(Board& b) {
+	while less than 100 attempts and not all ships are placed
+		pick random ship starting point and direction
+		if I can place the ship at this point in this direction
+			if the ship is touching other ships
+				backtrack and unplace that ship
+			else 
+				move onto next ship (unless we’ve placed all ships so return true)
+	if there are unplaced ships left, return false
+}
+
+Point GoodPlayer::recommendAttack() {
+	disregard any unattacked cells surrounded by unsuccessful attacks (‘o’) or already-attacked cells
+	if in state 2
+		if currShipDir is horizontal (by default it’s horizontal)
+			if left cell unattacked
+				recommend/return that point
+			if right cell unattacked
+				recommend/return that point
+			if both left and right are attacked but ship not destroyed (continuous == true)
+				return point to right of attack origin point to destroy remaining ship segment
+			if attacks unsuccessful, change currShipDir to vertical 
+		if currShipDir is vertical
+			if upper cell unattacked
+				recommend/return that point
+			if lower cell unattacked
+				recommend/return that point
+			if both up and down are attacked but ship not destroyed (continuous == true)
+				return point south of attack origin point to destroy remaining ship segment
+	if we’ve reached this point, we’re either in state 1, or failed to recommend a point in state 2
+	take a point from toBeAttacked (a vector of prospective attacking points) and return it
+	if toBeAttacked is empty, return a random checkerboard point
+	if most checkerboard points have already been attacked, return a random unattacked point
+}
+
+void GoodPlayer::cleanoutToBeAttacked() {
+	make an iterator for toBeAttacked
+	go through toBeAttacked and delete any points where attackedCells is not ‘.’ 
+}
+
+void GoodPlayer::cleanoutAttackedCells() {
+	if there are ships on this board that are length 1, don't proceed
+	for loop through rows
+		for loop through cols
+			get rid of cells that are surrounded by ‘o’s, as they are unworthy of being attacked
+}
+
+void GoodPlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId) { 
+	if in state 1 
+		if we hit a ship and don’t destroy it
+			update necessary members
+			change to state 2
+			push the cell/Point that made us change from state 1 to 2’s surrounding values onto toBeAttacked
+	if in state 2
+		if missed, continuousAttack is false
+		if hit but ship not destroyed, continuousAttack is true unless…
+			the shipId of the ship at the cell is not the same as the previously hit cell
+				then continuousAttack is false and we push that cell’s surrounding values onto toBeAttacked
+			update rest of necessary members
+		if hit and ship destroyed
+			reset necessary members to defaults (ie. reset currShipDir to horizontal)
+			change to state 1
+}
+
+void GoodPlayer::updateToBeAttacked(Point p) {
+	four if cases for cells up/down/left/right of p
+		if cell unattacked, push that cell onto toBeAttacked
+}
