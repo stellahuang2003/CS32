@@ -1,0 +1,74 @@
+1a) 
+                                50
+                            /       \
+                          20         60
+                       /     \          \
+                    10        40         70
+                     \      /           /   \ 
+                      15   30         63     80
+                          /  \               /
+                        24   36             75
+1b) 
+Inorder: 10 15 20 24 30 36 40 50 60 63 70 75 80
+Preorder: 50 20 10 15 40 30 24 36 60 70 63 80 75
+Postorder: 15 10 24 36 30 40 20 63 75 80 70 60 50
+
+1c) 
+                                50
+                            /       \
+                          15         60
+                       /     \          \
+                    10        40         70
+                            /           /   \ 
+                           36         63     80
+                          /                  /
+                        24                 75
+2a)
+struct bNode {
+    bNode* leftChild; 
+    bNode* rightChild; 
+    bNode* parent; 
+    int data; 
+};
+
+2b) 
+void insertNewNode(int value) {
+    if tree is empty
+	create new node with value, make its children and parents null, and point the root to it
+    make a current node pointer that starts at root
+    while node isn't inserted
+        if value equals the current node's value
+	    return
+	if value is less than current node's value
+	    if left child is nullptr
+		make new node with value, make its children null
+                make new node's parent the current node, and the current node's left child the new node
+		return 
+	    else
+		traverse left
+	if value is greater than current node's value
+	    if right child is nullptr
+		make new node with the desired value, make its children null
+                make new node's parent the current node, and the current node's right child the new node
+		return 
+	    else
+		traverse right
+}
+
+3a) 
+                                7
+                            /       \
+                           5         6
+                         /   \      /
+                        3     0    4  
+3b) {7, 5, 6, 3, 0, 4}
+3c) {6, 5, 4, 3, 0}
+
+4a) O(C+S)
+4b) O(logC+S)
+4c) O(logC+logS)
+4d) O(logS)
+4e) O(1)
+4f) O(logC+S)
+4g) O(S*logS)
+4h) O(C*logS)
